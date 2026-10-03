@@ -2,7 +2,6 @@ package com.example.ui.screens
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,24 +20,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -55,11 +48,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,16 +61,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.data.DownloadEntity
 import com.example.data.DownloadState
+import com.example.ui.components.GlassButton
 import com.example.ui.components.GlassCard
-import com.example.ui.components.NeonBadge
+import com.example.ui.components.GlassChip
+import com.example.ui.components.GlassDialog
+import com.example.ui.components.GlassProgress
 import com.example.ui.components.VideoPlayerModal
-import com.example.ui.theme.GlassBorder
-import com.example.ui.theme.GlassBorderSubtle
-import com.example.ui.theme.StatusError
-import com.example.ui.theme.StatusSuccess
-import com.example.ui.theme.StatusWarning
-import com.example.ui.theme.WarXCyan
-import com.example.ui.theme.WarXViolet
+import com.example.ui.theme.WarXTheme
 import com.example.ui.viewmodel.DownloadFilterTab
 import com.example.ui.viewmodel.DownloadsViewModel
 import java.io.File
@@ -88,6 +78,8 @@ fun DownloadsScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val colors = WarXTheme.colors
+
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val allDownloads by viewModel.allDownloads.collectAsStateWithLifecycle()
     val activeDownloads by viewModel.activeDownloads.collectAsStateWithLifecycle()
@@ -113,46 +105,64 @@ fun DownloadsScreen(
         Text(
             text = "Pengelola Unduhan",
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-            color = Color.White
+            color = colors.textPrimary
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = "Daftar proses unduhan video aktif dan riwayat file tersimpan",
             style = MaterialTheme.typography.bodySmall,
-            color = Color.White.copy(alpha = 0.65f)
+            color = colors.textSecondary
         )
         Spacer(modifier = Modifier.height(14.dp))
 
         // Segmented Tabs
         TabRow(
             selectedTabIndex = selectedTab.ordinal,
-            containerColor = Color(0xFF111827).copy(alpha = 0.6f),
-            contentColor = WarXCyan,
+            containerColor = colors.glassCard,
+            contentColor = colors.accentCyan,
             indicator = { tabPositions ->
                 TabRowDefaults.SecondaryIndicator(
                     Modifier.tabIndicatorOffset(tabPositions[selectedTab.ordinal]),
-                    color = WarXCyan,
+                    color = colors.accentCyan,
                     height = 3.dp
                 )
             },
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, GlassBorderSubtle, RoundedCornerShape(12.dp))
+                .border(1.dp, colors.glassBorderSubtle, RoundedCornerShape(12.dp))
         ) {
             Tab(
                 selected = selectedTab == DownloadFilterTab.ALL,
                 onClick = { viewModel.selectTab(DownloadFilterTab.ALL) },
-                text = { Text("Semua (${allDownloads.size})", fontSize = 12.sp) }
+                text = {
+                    Text(
+                        text = "Semua (${allDownloads.size})",
+                        fontSize = 12.sp,
+                        color = if (selectedTab == DownloadFilterTab.ALL) colors.accentCyan else colors.textMuted
+                    )
+                }
             )
             Tab(
                 selected = selectedTab == DownloadFilterTab.ACTIVE,
                 onClick = { viewModel.selectTab(DownloadFilterTab.ACTIVE) },
-                text = { Text("Aktif (${activeDownloads.size})", fontSize = 12.sp) }
+                text = {
+                    Text(
+                        text = "Aktif (${activeDownloads.size})",
+                        fontSize = 12.sp,
+                        color = if (selectedTab == DownloadFilterTab.ACTIVE) colors.accentCyan else colors.textMuted
+                    )
+                }
             )
             Tab(
                 selected = selectedTab == DownloadFilterTab.COMPLETED,
                 onClick = { viewModel.selectTab(DownloadFilterTab.COMPLETED) },
-                text = { Text("Selesai (${completedDownloads.size})", fontSize = 12.sp) }
+                text = {
+                    Text(
+                        text = "Selesai (${completedDownloads.size})",
+                        fontSize = 12.sp,
+                        color = if (selectedTab == DownloadFilterTab.COMPLETED) colors.accentCyan else colors.textMuted
+                    )
+                }
             )
         }
 
@@ -178,14 +188,14 @@ fun DownloadsScreen(
                         Icon(
                             imageVector = Icons.Default.HourglassEmpty,
                             contentDescription = null,
-                            tint = WarXCyan.copy(alpha = 0.6f),
+                            tint = colors.accentCyan.copy(alpha = 0.7f),
                             modifier = Modifier.size(48.dp)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "Tidak Ada Unduhan",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = Color.White
+                            color = colors.textPrimary
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
@@ -195,8 +205,8 @@ fun DownloadsScreen(
                                 else -> "Belum ada riwayat unduhan. Mulai dari tab Beranda."
                             },
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.6f),
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            color = colors.textSecondary,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
@@ -204,7 +214,7 @@ fun DownloadsScreen(
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(bottom = 96.dp),
+                contentPadding = PaddingValues(bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(displayedList, key = { it.id }) { item ->
@@ -236,34 +246,30 @@ fun DownloadsScreen(
     // Delete Confirmation Dialog
     if (itemToDelete != null) {
         val target = itemToDelete!!
-        AlertDialog(
+        GlassDialog(
             onDismissRequest = { itemToDelete = null },
-            containerColor = Color(0xFF0F172A),
-            title = {
-                Text("Hapus Unduhan?", color = Color.White, fontWeight = FontWeight.Bold)
-            },
-            text = {
-                Text(
-                    "Apakah Anda yakin ingin menghapus '${target.title}' beserta file fisiknya?",
-                    color = Color.White.copy(alpha = 0.8f)
-                )
-            },
+            title = "Hapus Unduhan?",
             confirmButton = {
-                TextButton(
+                GlassButton(
+                    text = "Hapus File",
                     onClick = {
                         viewModel.deleteDownload(target, deleteFile = true)
                         itemToDelete = null
                     }
-                ) {
-                    Text("Hapus", color = StatusError, fontWeight = FontWeight.Bold)
-                }
+                )
             },
             dismissButton = {
                 TextButton(onClick = { itemToDelete = null }) {
-                    Text("Batal", color = Color.White.copy(alpha = 0.6f))
+                    Text("Batal", color = colors.textMuted)
                 }
             }
-        )
+        ) {
+            Text(
+                text = "Apakah Anda yakin ingin menghapus '${target.title}' beserta file fisiknya?",
+                color = colors.textSecondary,
+                fontSize = 13.sp
+            )
+        }
     }
 }
 
@@ -278,6 +284,7 @@ fun DownloadItemCard(
     onDelete: () -> Unit,
     onShare: () -> Unit
 ) {
+    val colors = WarXTheme.colors
     val progress = (item.progressPercent / 100f).coerceIn(0f, 1f)
 
     GlassCard(
@@ -285,23 +292,22 @@ fun DownloadItemCard(
             .fillMaxWidth()
             .animateContentSize(),
         borderColor = when (item.state) {
-            DownloadState.DOWNLOADING -> WarXCyan.copy(alpha = 0.7f)
-            DownloadState.COMPLETED -> StatusSuccess.copy(alpha = 0.5f)
-            DownloadState.FAILED -> StatusError.copy(alpha = 0.5f)
-            DownloadState.PAUSED -> StatusWarning.copy(alpha = 0.5f)
-            else -> GlassBorderSubtle
+            DownloadState.DOWNLOADING -> colors.accentCyan.copy(alpha = 0.7f)
+            DownloadState.COMPLETED -> colors.statusSuccess.copy(alpha = 0.5f)
+            DownloadState.FAILED -> colors.statusError.copy(alpha = 0.5f)
+            DownloadState.PAUSED -> colors.statusWarning.copy(alpha = 0.5f)
+            else -> colors.glassBorderSubtle
         }
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            // Header Row: Thumbnail/Icon, Title, State Badge
+            // Header: Thumbnail/Icon, Title, Badges
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Video Poster / Icon
                 Box(
                     modifier = Modifier
                         .size(52.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color.Black.copy(alpha = 0.6f))
-                        .border(1.dp, GlassBorderSubtle, RoundedCornerShape(10.dp)),
+                        .background(colors.glassSurface)
+                        .border(1.dp, colors.glassBorderSubtle, RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     if (!item.thumbnailUrl.isNullOrBlank()) {
@@ -319,7 +325,7 @@ fun DownloadItemCard(
                                 else -> Icons.Default.PlayArrow
                             },
                             contentDescription = null,
-                            tint = WarXCyan,
+                            tint = colors.accentCyan,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -331,7 +337,7 @@ fun DownloadItemCard(
                     Text(
                         text = item.title,
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                        color = Color.White,
+                        color = colors.textPrimary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -340,22 +346,21 @@ fun DownloadItemCard(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        NeonBadge(
+                        GlassChip(
                             text = item.quality,
-                            color = WarXCyan
+                            color = colors.accentCyan
                         )
-                        NeonBadge(
+                        GlassChip(
                             text = item.format,
-                            color = if (item.isHls) WarXViolet else WarXCyan
+                            color = if (item.isHls) colors.accentViolet else colors.accentCyan
                         )
-                        // Status badge
                         val (statusText, statusColor) = when (item.state) {
-                            DownloadState.DOWNLOADING -> Pair("Mengunduh", WarXCyan)
-                            DownloadState.PAUSED -> Pair("Dijeda", StatusWarning)
-                            DownloadState.COMPLETED -> Pair("Selesai", StatusSuccess)
-                            DownloadState.FAILED -> Pair("Gagal", StatusError)
-                            DownloadState.CANCELLED -> Pair("Dibatalkan", Color.Gray)
-                            DownloadState.PENDING -> Pair("Menunggu", Color.LightGray)
+                            DownloadState.DOWNLOADING -> Pair("Mengunduh", colors.accentCyan)
+                            DownloadState.PAUSED -> Pair("Dijeda", colors.statusWarning)
+                            DownloadState.COMPLETED -> Pair("Selesai", colors.statusSuccess)
+                            DownloadState.FAILED -> Pair("Gagal", colors.statusError)
+                            DownloadState.CANCELLED -> Pair("Dibatalkan", colors.textMuted)
+                            DownloadState.PENDING -> Pair("Menunggu", colors.textMuted)
                         }
                         Text(
                             text = statusText,
@@ -366,28 +371,22 @@ fun DownloadItemCard(
                     }
                 }
 
-                // Delete Action
                 IconButton(onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Hapus",
-                        tint = Color.White.copy(alpha = 0.5f)
+                        tint = colors.textMuted
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Progress bar & Live Stats when in active states
+            // Progress Bar & Live Stats when Active
             if (item.state == DownloadState.DOWNLOADING || item.state == DownloadState.PAUSED || item.state == DownloadState.PENDING) {
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp)),
-                    color = if (item.state == DownloadState.PAUSED) StatusWarning else WarXCyan,
-                    trackColor = Color.White.copy(alpha = 0.15f)
+                GlassProgress(
+                    progress = progress,
+                    height = 6.dp
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -397,7 +396,6 @@ fun DownloadItemCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Downloaded bytes / segments
                     val sizeInfo = if (item.isHls && item.totalSegments > 0) {
                         "Segmen ${item.downloadedSegments}/${item.totalSegments} (${formatBytes(item.downloadedBytes)})"
                     } else if (item.totalBytes > 0) {
@@ -409,10 +407,9 @@ fun DownloadItemCard(
                     Text(
                         text = "$sizeInfo (${(item.progressPercent).toInt()}%)",
                         fontSize = 11.sp,
-                        color = Color.White.copy(alpha = 0.7f)
+                        color = colors.textSecondary
                     )
 
-                    // Speed & ETA
                     if (item.state == DownloadState.DOWNLOADING && item.speedBytesPerSec > 0) {
                         val speedStr = formatBytes(item.speedBytesPerSec) + "/s"
                         val etaStr = if (item.etaSeconds > 0) {
@@ -424,25 +421,25 @@ fun DownloadItemCard(
                             text = "$speedStr ${if (etaStr.isNotEmpty()) "• $etaStr" else ""}",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = WarXCyan
+                            color = colors.accentCyan
                         )
                     }
                 }
             }
 
-            // Error message if failed
+            // Error info if failed
             if (item.state == DownloadState.FAILED && !item.errorMessage.isNullOrBlank()) {
                 Text(
                     text = item.errorMessage,
                     fontSize = 11.sp,
-                    color = StatusError,
+                    color = colors.statusError,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            // Completed metadata
+            // Completed info
             if (item.state == DownloadState.COMPLETED) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -452,12 +449,12 @@ fun DownloadItemCard(
                     Text(
                         text = "Ukuran: ${formatBytes(item.downloadedBytes)}",
                         fontSize = 11.sp,
-                        color = Color.White.copy(alpha = 0.6f)
+                        color = colors.textMuted
                     )
                     Text(
                         text = "Tersimpan",
                         fontSize = 11.sp,
-                        color = StatusSuccess,
+                        color = colors.statusSuccess,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -465,7 +462,7 @@ fun DownloadItemCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Action Buttons Row
+            // Action Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
@@ -474,48 +471,48 @@ fun DownloadItemCard(
                 when (item.state) {
                     DownloadState.DOWNLOADING -> {
                         TextButton(onClick = onPause) {
-                            Icon(Icons.Default.Pause, contentDescription = null, tint = StatusWarning, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Pause, contentDescription = null, tint = colors.statusWarning, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Jeda", color = StatusWarning, fontSize = 12.sp)
+                            Text("Jeda", color = colors.statusWarning, fontSize = 12.sp)
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                         TextButton(onClick = onCancel) {
-                            Icon(Icons.Default.Close, contentDescription = null, tint = StatusError, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Close, contentDescription = null, tint = colors.statusError, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Batal", color = StatusError, fontSize = 12.sp)
+                            Text("Batal", color = colors.statusError, fontSize = 12.sp)
                         }
                     }
                     DownloadState.PAUSED -> {
                         TextButton(onClick = onResume) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = WarXCyan, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = colors.accentCyan, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Lanjutkan", color = WarXCyan, fontSize = 12.sp)
+                            Text("Lanjutkan", color = colors.accentCyan, fontSize = 12.sp)
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                         TextButton(onClick = onCancel) {
-                            Icon(Icons.Default.Close, contentDescription = null, tint = StatusError, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Close, contentDescription = null, tint = colors.statusError, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Batal", color = StatusError, fontSize = 12.sp)
+                            Text("Batal", color = colors.statusError, fontSize = 12.sp)
                         }
                     }
                     DownloadState.FAILED -> {
                         TextButton(onClick = onRetry) {
-                            Icon(Icons.Default.Refresh, contentDescription = null, tint = WarXCyan, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Refresh, contentDescription = null, tint = colors.accentCyan, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Coba Lagi", color = WarXCyan, fontSize = 12.sp)
+                            Text("Coba Lagi", color = colors.accentCyan, fontSize = 12.sp)
                         }
                     }
                     DownloadState.COMPLETED -> {
                         TextButton(onClick = onShare) {
-                            Icon(Icons.Default.Share, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Share, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Bagi", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+                            Text("Bagi", color = colors.textSecondary, fontSize = 12.sp)
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                         TextButton(onClick = onPlay) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = WarXCyan, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = colors.accentCyan, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Putar Video", color = WarXCyan, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("Putar Video", color = colors.accentCyan, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                     else -> {}

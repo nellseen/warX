@@ -8,6 +8,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.data.AppThemeMode
+import com.example.data.ThemePreferences
 import com.example.ui.MainApp
 import com.example.ui.theme.WarXTheme
 
@@ -21,8 +24,11 @@ class MainActivity : ComponentActivity() {
 
         handleIntent(intent)
 
+        val themePreferences = ThemePreferences.getInstance(this)
+
         setContent {
-            WarXTheme {
+            val themeMode by themePreferences.themeMode.collectAsStateWithLifecycle()
+            WarXTheme(themeMode = themeMode) {
                 MainApp(sharedUrl = sharedUrl)
             }
         }

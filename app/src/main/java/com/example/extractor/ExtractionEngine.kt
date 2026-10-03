@@ -660,11 +660,19 @@ class ExtractionEngine(
     }
 
     private fun cleanExtractedString(str: String): String {
-        return str.replace("\\/", "/")
+        var res = str.replace("\\/", "/")
+            .replace("\\u002F", "/")
             .replace("\\u0026", "&")
             .replace("&amp;", "&")
             .replace("\\\"", "\"")
+            .replace("\\'", "'")
             .trim()
+        if (res.startsWith("http%3A%2F%2F", ignoreCase = true) || res.startsWith("https%3A%2F%2F", ignoreCase = true)) {
+            try {
+                res = java.net.URLDecoder.decode(res, "UTF-8")
+            } catch (_: Exception) {}
+        }
+        return res
     }
 
     private fun formatDuration(seconds: Double): String {

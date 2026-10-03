@@ -1,10 +1,15 @@
 package com.example.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.WarXApp
+import com.example.data.AppThemeMode
+import com.example.data.ThemePreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class UserAgentPreset(
     val name: String,
@@ -12,7 +17,10 @@ data class UserAgentPreset(
     val value: String
 )
 
-class SettingsViewModel : ViewModel() {
+class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val themePreferences = ThemePreferences.getInstance(application)
+    val themeMode: StateFlow<AppThemeMode> = themePreferences.themeMode
 
     val presets = listOf(
         UserAgentPreset(
@@ -40,8 +48,19 @@ class SettingsViewModel : ViewModel() {
     private val _selectedPreset = MutableStateFlow(presets.first())
     val selectedPreset: StateFlow<UserAgentPreset> = _selectedPreset.asStateFlow()
 
+    fun setTheme(mode: AppThemeMode) {
+        themePreferences.setThemeMode(mode)
+    }
+
     fun selectPreset(preset: UserAgentPreset) {
         _selectedPreset.value = preset
         WarXApp.instance.updateExtractionEngineUserAgent(preset.value)
+    }
+
+    fun clearAllHistory() {
+        viewModelScope.launch {
+            val db = WarXApp.instance.database
+            db.clearAllTables()
+        }
     }
 }
