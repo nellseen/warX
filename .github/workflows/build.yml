@@ -22,14 +22,31 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Setup Environment & Keystore
+      - name: Setup Keystores & Environment
         run: |
+          # 1. Setup debug.keystore
           if [ -f "debug.keystore.base64" ] && [ ! -f "debug.keystore" ]; then
-            base64 -d debug.keystore.base64 > debug.keystore
+            base64 -d debug.keystore.base64 > debug.keystore || true
           fi
+          if [ ! -f "debug.keystore" ]; then
+            echo "Generating debug.keystore..."
+            keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+          cp debug.keystore app/debug.keystore || true
+
+          # 2. Setup release keystore (my-upload-key.jks)
+          if [ ! -f "my-upload-key.jks" ]; then
+            echo "Generating my-upload-key.jks for release signing..."
+            keytool -genkeypair -v -keystore my-upload-key.jks -storepass android -alias upload -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Release,O=Android,C=US"
+          fi
+          cp my-upload-key.jks app/my-upload-key.jks || true
+
+          # 3. Setup .env
           if [ ! -f ".env" ] && [ -f ".env.example" ]; then
             cp .env.example .env
           fi
+
+          # 4. Ensure Gradle wrapper is executable
           if [ ! -f "gradlew" ]; then
             gradle wrapper || true
           fi
@@ -37,9 +54,15 @@ jobs:
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace
+        env:
+          STORE_PASSWORD: android
+          KEY_PASSWORD: android
 
       - name: Build Release APK
         run: ./gradlew assembleRelease --stacktrace || true
+        env:
+          STORE_PASSWORD: android
+          KEY_PASSWORD: android
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4

@@ -519,7 +519,7 @@ class ExtractionEngine(
         val packedPattern = Pattern.compile("""eval\s*\(\s*function\s*\(\s*p\s*,\s*a\s*,\s*c\s*,\s*k\s*,\s*e\s*,\s*[dr]\s*\)[\s\S]*?\.split\s*\(\s*['"]\|['"]\s*\)\s*\)\s*\)""")
         val matcher = packedPattern.matcher(html)
         while (matcher.find()) {
-            val packedBlock = matcher.group(0)
+            val packedBlock = matcher.group(0).orEmpty()
             val unpacked = unpackDeanEdwards(packedBlock)
             if (unpacked != null) {
                 scanDeepForMediaUrls(unpacked, baseUrl, candidateUrls)
