@@ -1,0 +1,6 @@
+{
+  "name": "WarX Downloader",
+  "description": "Native Android video extraction and high-speed HLS and direct stream downloader with glassmorphism UI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
