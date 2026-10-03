@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -118,10 +119,12 @@ fun GlassScaffold(
             .fillMaxSize()
             .background(colors.backgroundBrush)
     ) {
-        val maxWidth = maxWidth
-        val isWide = maxWidth > 680.dp
-
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .windowInsetsPadding(WindowInsets.displayCutout)
+        ) {
             topBar()
 
             Box(
@@ -133,7 +136,7 @@ fun GlassScaffold(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .widthIn(max = 720.dp)
+                        .widthIn(max = 760.dp)
                 ) {
                     content(PaddingValues(0.dp))
                 }
@@ -477,6 +480,9 @@ fun GlassDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .windowInsetsPadding(WindowInsets.displayCutout)
                 .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {

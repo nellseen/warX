@@ -12,6 +12,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -79,7 +81,6 @@ import com.example.ui.components.GlassButton
 import com.example.ui.components.GlassCard
 import com.example.ui.components.GlassChip
 import com.example.ui.components.GlassDialog
-import com.example.ui.components.GlassSection
 import com.example.ui.components.GlassTextField
 import com.example.ui.components.SkeletonShimmer
 import com.example.ui.components.VideoPlayerModal
@@ -114,562 +115,564 @@ fun HomeScreen(
         Pair("Sample Direct MP4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4")
     )
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // 1. Hero Header
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(colors.accentGradient),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Videocam,
-                            contentDescription = null,
-                            tint = colors.buttonTextOnAccent,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = "WarX",
-                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
-                        color = colors.accentCyan
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Downloader",
-                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                        color = colors.textPrimary
-                    )
-                }
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Ekstraksi mendalam video web & downloader HLS master/variant native tanpa transcoding.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textSecondary
-                )
-            }
+    BoxWithConstraints(modifier = modifier.fillMaxSize().imePadding()) {
+        val horizontalPad = when {
+            maxWidth > 840.dp -> 32.dp
+            maxWidth > 600.dp -> 24.dp
+            else -> 16.dp
         }
 
-        // 2. URL Input Section
-        item {
-            GlassCard(
-                modifier = Modifier.fillMaxWidth(),
-                borderColor = if (urlInput.isNotBlank()) colors.glassBorder else null
-            ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = horizontalPad),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 120.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // 1. Hero Header
+            item {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
                 ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(colors.accentGradient),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Videocam,
+                                contentDescription = null,
+                                tint = colors.buttonTextOnAccent,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "WarX",
+                            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
+                            color = colors.accentCyan
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Downloader",
+                            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                            color = colors.textPrimary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Tautan Halaman Video",
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                        color = colors.textPrimary
+                        text = "Ekstraksi mendalam video web & downloader HLS master/variant native tanpa transcoding.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.textSecondary
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
+                }
+            }
 
-                    GlassTextField(
-                        value = urlInput,
-                        onValueChange = { viewModel.onUrlChanged(it) },
-                        placeholder = "Tempelkan tautan web (HTML/HLS/MP4)...",
-                        trailingIcon = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (urlInput.isNotEmpty()) {
-                                    IconButton(onClick = { viewModel.clearUrl() }) {
+            // 2. URL Input Card
+            item {
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    borderColor = if (urlInput.isNotBlank()) colors.glassBorder else null
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Text(
+                            text = "Tautan Halaman Video",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = colors.textPrimary
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        GlassTextField(
+                            value = urlInput,
+                            onValueChange = { viewModel.onUrlChanged(it) },
+                            placeholder = "Tempelkan tautan web (HTML/HLS/MP4)...",
+                            trailingIcon = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (urlInput.isNotEmpty()) {
+                                        IconButton(onClick = { viewModel.clearUrl() }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Clear,
+                                                contentDescription = "Hapus",
+                                                tint = colors.textMuted
+                                            )
+                                        }
+                                    }
+                                    IconButton(onClick = {
+                                        try {
+                                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                            val clip = clipboard?.primaryClip
+                                            if (clip != null && clip.itemCount > 0) {
+                                                val text = clip.getItemAt(0)?.text?.toString().orEmpty()
+                                                if (text.isNotBlank()) {
+                                                    viewModel.onUrlChanged(text)
+                                                }
+                                            }
+                                        } catch (_: Exception) {}
+                                    }) {
                                         Icon(
-                                            imageVector = Icons.Default.Clear,
-                                            contentDescription = "Hapus",
-                                            tint = colors.textMuted
+                                            imageVector = Icons.Default.ContentPaste,
+                                            contentDescription = "Tempel",
+                                            tint = colors.accentCyan
                                         )
                                     }
                                 }
-                                IconButton(onClick = {
-                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    val clip = clipboard.primaryClip
-                                    if (clip != null && clip.itemCount > 0) {
-                                        val text = clip.getItemAt(0).text?.toString().orEmpty()
-                                        if (text.isNotBlank()) {
-                                            viewModel.onUrlChanged(text)
-                                        }
-                                    }
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Default.ContentPaste,
-                                        contentDescription = "Tempel",
-                                        tint = colors.accentCyan
-                                    )
-                                }
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Uri,
-                            imeAction = ImeAction.Search
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onSearch = {
-                                keyboardController?.hide()
-                                viewModel.startExtraction()
-                            }
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    GlassButton(
-                        text = "Analisis & Ekstrak Video",
-                        onClick = {
-                            keyboardController?.hide()
-                            viewModel.startExtraction()
-                        },
-                        icon = Icons.Default.Search,
-                        enabled = uiState !is ExtractionUiState.Extracting && urlInput.isNotBlank(),
-                        isLoading = uiState is ExtractionUiState.Extracting,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Preset Quick Stream Chips
-                    Text(
-                        text = "Uji Coba Cepat (Sample Streams):",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colors.textMuted
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        for ((name, streamUrl) in testPresets) {
-                            GlassChip(
-                                text = name,
-                                color = colors.accentViolet,
-                                onClick = {
-                                    viewModel.onUrlChanged(streamUrl)
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Uri,
+                                imeAction = ImeAction.Search
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onSearch = {
+                                    keyboardController?.hide()
                                     viewModel.startExtraction()
                                 }
                             )
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        GlassButton(
+                            text = "Analisis & Ekstrak Video",
+                            onClick = {
+                                keyboardController?.hide()
+                                viewModel.startExtraction()
+                            },
+                            icon = Icons.Default.Search,
+                            enabled = uiState !is ExtractionUiState.Extracting && urlInput.isNotBlank(),
+                            isLoading = uiState is ExtractionUiState.Extracting,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Preset Quick Stream Chips
+                        Text(
+                            text = "Uji Coba Cepat (Sample Streams):",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colors.textMuted
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            for ((name, streamUrl) in testPresets) {
+                                GlassChip(
+                                    text = name,
+                                    color = colors.accentViolet,
+                                    onClick = {
+                                        viewModel.onUrlChanged(streamUrl)
+                                        viewModel.startExtraction()
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // 3. Extraction State (Loading / Error / Success)
-        when (val state = uiState) {
-            is ExtractionUiState.Extracting -> {
-                item {
-                    GlassCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        borderColor = colors.accentCyan.copy(alpha = 0.6f)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(18.dp)
+            // 3. Extraction State (Loading / Error / Success)
+            when (val state = uiState) {
+                is ExtractionUiState.Extracting -> {
+                    item {
+                        GlassCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            borderColor = colors.accentCyan.copy(alpha = 0.6f)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                CircularProgressIndicator(
-                                    color = colors.accentCyan,
-                                    strokeWidth = 2.5.dp,
+                            Column(modifier = Modifier.padding(18.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    CircularProgressIndicator(
+                                        color = colors.accentCyan,
+                                        strokeWidth = 2.5.dp,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = state.stage.message,
+                                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                            color = colors.accentCyan
+                                        )
+                                        Text(
+                                            text = state.detail,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = colors.textSecondary,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(14.dp))
+                                SkeletonShimmer(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(130.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                is ExtractionUiState.Error -> {
+                    item {
+                        GlassCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            borderColor = colors.statusError.copy(alpha = 0.6f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ErrorOutline,
+                                    contentDescription = null,
+                                    tint = colors.statusError,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        text = state.stage.message,
+                                        text = "Gagal Mengekstrak Video",
                                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                        color = colors.accentCyan
+                                        color = colors.statusError
                                     )
+                                    Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = state.detail,
+                                        text = state.message,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = colors.textSecondary,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        color = colors.textSecondary
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.height(14.dp))
-                            SkeletonShimmer(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(130.dp)
-                            )
                         }
                     }
                 }
-            }
 
-            is ExtractionUiState.Error -> {
-                item {
-                    GlassCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        borderColor = colors.statusError.copy(alpha = 0.6f)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.Top
+                is ExtractionUiState.Success -> {
+                    val metadata = state.metadata
+
+                    // 4. Metadata Preview Card
+                    item {
+                        GlassCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            borderColor = colors.glassBorder
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.ErrorOutline,
-                                contentDescription = null,
-                                tint = colors.statusError,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                // Thumbnail Preview with Play Overlay
+                                if (!metadata.thumbnailUrl.isNullOrBlank()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(max = 240.dp)
+                                            .aspectRatio(16f / 9f)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(Color.Black.copy(alpha = 0.5f))
+                                    ) {
+                                        AsyncImage(
+                                            model = metadata.thumbnailUrl,
+                                            contentDescription = "Thumbnail",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                        val firstPlayableUrl = selectedSource?.url ?: metadata.sources.firstOrNull()?.url
+                                        if (firstPlayableUrl != null) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(52.dp)
+                                                    .align(Alignment.Center)
+                                                    .clip(CircleShape)
+                                                    .background(Color.Black.copy(alpha = 0.65f))
+                                                    .border(2.dp, colors.accentCyan, CircleShape)
+                                                    .clickable {
+                                                        viewModel.openPreview(firstPlayableUrl, metadata.title)
+                                                    },
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.PlayArrow,
+                                                    contentDescription = "Putar",
+                                                    tint = colors.accentCyan,
+                                                    modifier = Modifier.size(30.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                }
+
+                                // Badges: Domain & Duration
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    GlassChip(
+                                        text = metadata.domain,
+                                        color = colors.accentCyan
+                                    )
+                                    if (metadata.durationFormatted != null) {
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        GlassChip(
+                                            text = metadata.durationFormatted,
+                                            color = colors.accentViolet
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+
                                 Text(
-                                    text = "Gagal Mengekstrak Video",
-                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = colors.statusError
+                                    text = metadata.title,
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = colors.textPrimary,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = state.message,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = colors.textSecondary
-                                )
+
+                                if (!metadata.author.isNullOrBlank()) {
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "Uploader: ${metadata.author}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.textMuted
+                                    )
+                                }
+
+                                if (!metadata.description.isNullOrBlank()) {
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = metadata.description,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.textSecondary,
+                                        maxLines = 3,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                // Expandable Technical Specs
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { showExtendedSpecs = !showExtendedSpecs }
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.Tune,
+                                            contentDescription = null,
+                                            tint = colors.accentCyan,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Spesifikasi Teknis Stream",
+                                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                                            color = colors.accentCyan
+                                        )
+                                    }
+                                    Icon(
+                                        imageVector = if (showExtendedSpecs) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                        contentDescription = null,
+                                        tint = colors.accentCyan,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+
+                                AnimatedVisibility(
+                                    visible = showExtendedSpecs,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 8.dp)
+                                    ) {
+                                        val highestVariant = metadata.sources.firstOrNull { !it.isMasterPlaylist }
+                                            ?: metadata.sources.firstOrNull()
+
+                                        FlowRow(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            if (highestVariant?.resolution != null) {
+                                                GlassChip(text = "Resolusi: ${highestVariant.resolution}", color = colors.accentCyan)
+                                            }
+                                            if (highestVariant?.videoCodec != null) {
+                                                GlassChip(text = "Video: ${highestVariant.videoCodec}", color = colors.accentViolet)
+                                            }
+                                            if (highestVariant?.audioCodec != null) {
+                                                GlassChip(text = "Audio: ${highestVariant.audioCodec}", color = colors.accentViolet)
+                                            }
+                                            if (highestVariant != null && highestVariant.fps > 0) {
+                                                GlassChip(text = "${highestVariant.fps.toInt()} FPS", color = colors.accentCyan)
+                                            }
+                                            if (highestVariant != null && highestVariant.bitrate > 0) {
+                                                GlassChip(text = "${highestVariant.bitrate / 1000} kbps", color = colors.accentCyan)
+                                            }
+                                            if (metadata.subtitles.isNotEmpty()) {
+                                                GlassChip(text = "${metadata.subtitles.size} Subtitle", color = colors.statusInfo)
+                                            }
+                                            if (metadata.audioTracks.isNotEmpty()) {
+                                                GlassChip(text = "${metadata.audioTracks.size} Audio Tracks", color = colors.statusInfo)
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            }
 
-            is ExtractionUiState.Success -> {
-                val metadata = state.metadata
+                    // 5. Sources Header
+                    item {
+                        Text(
+                            text = "Pilih Kualitas / Variant Stream (${metadata.sources.size})",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = colors.textPrimary
+                        )
+                    }
 
-                // 4. Metadata Preview Card
-                item {
-                    GlassCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        borderColor = colors.glassBorder
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            // Thumbnail Preview with Play Overlay
-                            if (!metadata.thumbnailUrl.isNullOrBlank()) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(max = 240.dp)
-                                        .aspectRatio(16f / 9f)
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(Color.Black.copy(alpha = 0.5f))
-                                ) {
-                                    AsyncImage(
-                                        model = metadata.thumbnailUrl,
-                                        contentDescription = "Thumbnail",
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier.fillMaxSize()
+                    // List of Streams
+                    items(metadata.sources) { source ->
+                        val isSelected = selectedSource?.id == source.id
+                        GlassCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.selectSource(source) },
+                            borderColor = if (isSelected) colors.accentCyan else colors.glassBorderSubtle,
+                            borderWidth = if (isSelected) 1.5.dp else 1.dp
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = { viewModel.selectSource(source) },
+                                    colors = RadioButtonDefaults.colors(
+                                        selectedColor = colors.accentCyan,
+                                        unselectedColor = colors.textMuted
                                     )
-                                    val firstPlayableUrl = selectedSource?.url ?: metadata.sources.firstOrNull()?.url
-                                    if (firstPlayableUrl != null) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(52.dp)
-                                                .align(Alignment.Center)
-                                                .clip(CircleShape)
-                                                .background(Color.Black.copy(alpha = 0.65f))
-                                                .border(2.dp, colors.accentCyan, CircleShape)
-                                                .clickable {
-                                                    viewModel.openPreview(firstPlayableUrl, metadata.title)
-                                                },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.PlayArrow,
-                                                contentDescription = "Putar",
-                                                tint = colors.accentCyan,
-                                                modifier = Modifier.size(30.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = source.quality,
+                                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                            color = if (isSelected) colors.accentCyan else colors.textPrimary
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        GlassChip(
+                                            text = source.format,
+                                            color = if (source.isHls) colors.accentViolet else colors.accentCyan
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        if (!source.resolution.isNullOrBlank()) {
+                                            Text(
+                                                text = source.resolution,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = colors.textMuted
+                                            )
+                                        }
+                                        if (source.fps > 0) {
+                                            Text(
+                                                text = "${source.fps.toInt()} FPS",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = colors.textMuted
+                                            )
+                                        }
+                                        if (source.bitrate > 0) {
+                                            Text(
+                                                text = "${source.bitrate / 1000} kbps",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = colors.textMuted
+                                            )
+                                        }
+                                        if (source.sizeBytes > 0) {
+                                            Text(
+                                                text = formatBytes(source.sizeBytes),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = colors.statusSuccess
                                             )
                                         }
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(12.dp))
-                            }
 
-                            // Badges: Domain & Duration
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                GlassChip(
-                                    text = metadata.domain,
-                                    color = colors.accentCyan
-                                )
-                                if (metadata.durationFormatted != null) {
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    GlassChip(
-                                        text = metadata.durationFormatted,
-                                        color = colors.accentViolet
+                                // Preview Button
+                                IconButton(onClick = {
+                                    viewModel.openPreview(source.url, "${metadata.title} [${source.quality}]")
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = "Preview Stream",
+                                        tint = colors.accentCyan
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.height(6.dp))
+                        }
+                    }
 
-                            Text(
-                                text = metadata.title,
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = colors.textPrimary,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
+                    // 6. Download Action Button
+                    item {
+                        val currentSource = selectedSource ?: metadata.sources.firstOrNull()
+                        if (currentSource != null) {
+                            GlassButton(
+                                text = "Unduh ${currentSource.quality} (${currentSource.format})",
+                                onClick = {
+                                    activeMetadataForDownload = metadata
+                                    customFileName = metadata.title
+                                    showDownloadDialog = true
+                                },
+                                icon = Icons.Default.Download,
+                                modifier = Modifier.fillMaxWidth()
                             )
+                        }
+                    }
+                }
 
-                            if (!metadata.author.isNullOrBlank()) {
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Uploader: ${metadata.author}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = colors.textMuted
-                                )
-                            }
-
-                            if (!metadata.description.isNullOrBlank()) {
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = metadata.description,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = colors.textSecondary,
-                                    maxLines = 3,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-
-                            // Expandable Technical Specs
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Row(
+                ExtractionUiState.Idle -> {
+                    // Empty state card
+                    item {
+                        GlassCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable { showExtendedSpecs = !showExtendedSpecs }
-                                    .padding(vertical = 4.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                    .padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.Tune,
-                                        contentDescription = null,
-                                        tint = colors.accentCyan,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "Spesifikasi Teknis Stream",
-                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                        color = colors.accentCyan
-                                    )
-                                }
                                 Icon(
-                                    imageVector = if (showExtendedSpecs) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    imageVector = Icons.Default.Movie,
                                     contentDescription = null,
-                                    tint = colors.accentCyan,
-                                    modifier = Modifier.size(18.dp)
+                                    tint = colors.accentCyan.copy(alpha = 0.85f),
+                                    modifier = Modifier.size(44.dp)
                                 )
-                            }
-
-                            AnimatedVisibility(
-                                visible = showExtendedSpecs,
-                                enter = expandVertically() + fadeIn(),
-                                exit = shrinkVertically() + fadeOut()
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp)
-                                ) {
-                                    val highestVariant = metadata.sources.firstOrNull { !it.isMasterPlaylist }
-                                        ?: metadata.sources.firstOrNull()
-
-                                    FlowRow(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        if (highestVariant?.resolution != null) {
-                                            GlassChip(text = "Resolusi: ${highestVariant.resolution}", color = colors.accentCyan)
-                                        }
-                                        if (highestVariant?.videoCodec != null) {
-                                            GlassChip(text = "Video: ${highestVariant.videoCodec}", color = colors.accentViolet)
-                                        }
-                                        if (highestVariant?.audioCodec != null) {
-                                            GlassChip(text = "Audio: ${highestVariant.audioCodec}", color = colors.accentViolet)
-                                        }
-                                        if (highestVariant != null && highestVariant.fps > 0) {
-                                            GlassChip(text = "${highestVariant.fps.toInt()} FPS", color = colors.accentCyan)
-                                        }
-                                        if (highestVariant != null && highestVariant.bitrate > 0) {
-                                            GlassChip(text = "${highestVariant.bitrate / 1000} kbps", color = colors.accentCyan)
-                                        }
-                                        if (metadata.subtitles.isNotEmpty()) {
-                                            GlassChip(text = "${metadata.subtitles.size} Subtitle", color = colors.statusInfo)
-                                        }
-                                        if (metadata.audioTracks.isNotEmpty()) {
-                                            GlassChip(text = "${metadata.audioTracks.size} Audio Tracks", color = colors.statusInfo)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // 5. Sources & Quality Header
-                item {
-                    Text(
-                        text = "Pilih Kualitas / Variant Stream (${metadata.sources.size})",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                        color = colors.textPrimary
-                    )
-                }
-
-                // List of Streams
-                items(metadata.sources) { source ->
-                    val isSelected = selectedSource?.id == source.id
-                    GlassCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { viewModel.selectSource(source) },
-                        borderColor = if (isSelected) colors.accentCyan else colors.glassBorderSubtle,
-                        borderWidth = if (isSelected) 1.5.dp else 1.dp
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = isSelected,
-                                onClick = { viewModel.selectSource(source) },
-                                colors = RadioButtonDefaults.colors(
-                                    selectedColor = colors.accentCyan,
-                                    unselectedColor = colors.textMuted
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "Ekstraktor Video Siap Digunakan",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = colors.textPrimary
                                 )
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = source.quality,
-                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                        color = if (isSelected) colors.accentCyan else colors.textPrimary
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    GlassChip(
-                                        text = source.format,
-                                        color = if (source.isHls) colors.accentViolet else colors.accentCyan
-                                    )
-                                }
-
                                 Spacer(modifier = Modifier.height(4.dp))
-
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    if (!source.resolution.isNullOrBlank()) {
-                                        Text(
-                                            text = source.resolution,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = colors.textMuted
-                                        )
-                                    }
-                                    if (source.fps > 0) {
-                                        Text(
-                                            text = "${source.fps.toInt()} FPS",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = colors.textMuted
-                                        )
-                                    }
-                                    if (source.bitrate > 0) {
-                                        Text(
-                                            text = "${source.bitrate / 1000} kbps",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = colors.textMuted
-                                        )
-                                    }
-                                    if (source.sizeBytes > 0) {
-                                        Text(
-                                            text = formatBytes(source.sizeBytes),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = colors.statusSuccess
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Preview Button
-                            IconButton(onClick = {
-                                viewModel.openPreview(source.url, "${metadata.title} [${source.quality}]")
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = "Preview Stream",
-                                    tint = colors.accentCyan
+                                Text(
+                                    text = "Salin URL halaman video dari browser atau gunakan tombol Uji Coba Cepat di atas untuk mencoba pengunduhan HLS master atau MP4 langsung.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.textSecondary,
+                                    textAlign = TextAlign.Center
                                 )
                             }
-                        }
-                    }
-                }
-
-                // 6. Download Action Button
-                item {
-                    val currentSource = selectedSource ?: metadata.sources.firstOrNull()
-                    if (currentSource != null) {
-                        GlassButton(
-                            text = "Unduh ${currentSource.quality} (${currentSource.format})",
-                            onClick = {
-                                activeMetadataForDownload = metadata
-                                customFileName = metadata.title
-                                showDownloadDialog = true
-                            },
-                            icon = Icons.Default.Download,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-            }
-
-            ExtractionUiState.Idle -> {
-                // Empty state card
-                item {
-                    GlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Movie,
-                                contentDescription = null,
-                                tint = colors.accentCyan.copy(alpha = 0.85f),
-                                modifier = Modifier.size(44.dp)
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = "Ekstraktor Video Siap Digunakan",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = colors.textPrimary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Salin URL halaman video dari browser atau gunakan tombol Uji Coba Cepat di atas untuk mencoba pengunduhan HLS master atau MP4 langsung.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.textSecondary,
-                                textAlign = TextAlign.Center
-                            )
                         }
                     }
                 }
@@ -677,9 +680,10 @@ fun HomeScreen(
         }
     }
 
-    // Video Player Modal
-    if (previewVideo != null) {
-        val (url, title) = previewVideo!!
+    // Video Player Modal (100% Null-safe snapshot without !!)
+    val currentPreview = previewVideo
+    if (currentPreview != null) {
+        val (url, title) = currentPreview
         VideoPlayerModal(
             videoUrl = url,
             title = title,
@@ -687,11 +691,10 @@ fun HomeScreen(
         )
     }
 
-    // Download Confirmation Dialog
-    if (showDownloadDialog && activeMetadataForDownload != null && selectedSource != null) {
-        val meta = activeMetadataForDownload!!
-        val src = selectedSource!!
-
+    // Download Confirmation Dialog (100% Null-safe snapshot without !!)
+    val currentMeta = activeMetadataForDownload
+    val currentSrc = selectedSource
+    if (showDownloadDialog && currentMeta != null && currentSrc != null) {
         GlassDialog(
             onDismissRequest = { showDownloadDialog = false },
             title = "Mulai Unduhan",
@@ -702,8 +705,8 @@ fun HomeScreen(
                         showDownloadDialog = false
                         viewModel.startDownload(
                             context = context,
-                            metadata = meta,
-                            source = src,
+                            metadata = currentMeta,
+                            source = currentSrc,
                             customTitle = customFileName,
                             onStarted = { onNavigateToDownloads() }
                         )
@@ -718,7 +721,7 @@ fun HomeScreen(
         ) {
             Column {
                 Text(
-                    text = "Kualitas: ${src.quality} (${src.format})",
+                    text = "Kualitas: ${currentSrc.quality} (${currentSrc.format})",
                     color = colors.textSecondary,
                     fontSize = 13.sp
                 )

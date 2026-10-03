@@ -6,11 +6,11 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.MainActivity
-import com.example.R
 import com.example.WarXApp
 import com.example.data.DownloadEntity
 import com.example.data.DownloadState
@@ -30,21 +30,25 @@ class DownloadForegroundService : Service() {
         const val CHANNEL_ID = "warx_downloader_channel"
         const val NOTIFICATION_ID = 1001
 
-        const val ACTION_START = "ACTION_START"
         const val ACTION_PAUSE = "ACTION_PAUSE"
         const val ACTION_RESUME = "ACTION_RESUME"
         const val ACTION_CANCEL = "ACTION_CANCEL"
         const val EXTRA_DOWNLOAD_ID = "EXTRA_DOWNLOAD_ID"
 
-        fun startService(context: Context, downloadId: Long) {
-            val intent = Intent(context, DownloadForegroundService::class.java).apply {
-                action = ACTION_START
-                putExtra(EXTRA_DOWNLOAD_ID, downloadId)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+        /**
+         * Safely starts the foreground service without recursion.
+         * Only manages service lifecycle and ongoing notification.
+         */
+        fun startService(context: Context) {
+            try {
+                val intent = Intent(context, DownloadForegroundService::class.java)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (_: Exception) {
+                // Catch BackgroundServiceStartNotAllowedException on Android 12+
             }
         }
     }
@@ -54,10 +58,16 @@ class DownloadForegroundService : Service() {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
 
-        val notification = createNotification("WarX Downloader", "Siap mengunduh video...", 0, false)
-        startForeground(NOTIFICATION_ID, notification)
+        val notification = createNotification("WarX Downloader", "Layanan unduhan aktif...", 0, false)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (_: Exception) {}
 
-        // Observe active downloads to update notification
+        // Observe active downloads to update notification and auto-stop when idle
         serviceScope.launch {
             val repo = WarXApp.instance.downloadRepository
             repo.activeDownloads.collectLatest { activeList ->
@@ -68,10 +78,22 @@ class DownloadForegroundService : Service() {
                     val etaStr = if (downloading.etaSeconds > 0) formatEta(downloading.etaSeconds) else ""
                     val content = "$speedStr • $progress% ${if (etaStr.isNotEmpty()) "• $etaStr" else ""}"
                     val notif = createNotification(downloading.title, content, progress, true, downloading.id)
-                    notificationManager.notify(NOTIFICATION_ID, notif)
-                } else if (activeList.isEmpty()) {
-                    stopForeground(STOP_FOREGROUND_REMOVE)
-                    stopSelf()
+                    try {
+                        notificationManager.notify(NOTIFICATION_ID, notif)
+                    } catch (_: Exception) {}
+                } else {
+                    val hasPendingOrPaused = activeList.any { it.state == DownloadState.PAUSED || it.state == DownloadState.PENDING }
+                    if (!hasPendingOrPaused) {
+                        try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                stopForeground(STOP_FOREGROUND_REMOVE)
+                            } else {
+                                @Suppress("DEPRECATION")
+                                stopForeground(true)
+                            }
+                            stopSelf()
+                        } catch (_: Exception) {}
+                    }
                 }
             }
         }
@@ -81,12 +103,9 @@ class DownloadForegroundService : Service() {
         val action = intent?.action
         val downloadId = intent?.getLongExtra(EXTRA_DOWNLOAD_ID, -1L) ?: -1L
 
+        // Only handle user controls from notification actions (Pause, Resume, Cancel)
+        // Never initiate a recursive startDownload from the service itself!
         when (action) {
-            ACTION_START -> {
-                if (downloadId > 0) {
-                    DownloadManager.getInstance(applicationContext).startDownload(downloadId)
-                }
-            }
             ACTION_PAUSE -> {
                 if (downloadId > 0) {
                     DownloadManager.getInstance(applicationContext).pauseDownload(downloadId)
@@ -103,7 +122,7 @@ class DownloadForegroundService : Service() {
                 }
             }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

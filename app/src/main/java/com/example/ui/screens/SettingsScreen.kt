@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -79,13 +80,20 @@ fun SettingsScreen(
     val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_MOVIES) ?: context.filesDir
     val freeSpaceGb = (storageDir.freeSpace / (1024.0 * 1024.0 * 1024.0))
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val horizontalPad = when {
+            maxWidth > 840.dp -> 32.dp
+            maxWidth > 600.dp -> 24.dp
+            else -> 16.dp
+        }
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = horizontalPad),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 120.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         // Page Header
         item {
             Column {
@@ -345,30 +353,31 @@ fun SettingsScreen(
         }
     }
 
-    if (showClearHistoryDialog) {
-        GlassDialog(
-            onDismissRequest = { showClearHistoryDialog = false },
-            title = "Hapus Riwayat Unduhan?",
-            confirmButton = {
-                GlassButton(
-                    text = "Hapus Riwayat",
-                    onClick = {
-                        viewModel.clearAllHistory()
-                        showClearHistoryDialog = false
+        if (showClearHistoryDialog) {
+            GlassDialog(
+                onDismissRequest = { showClearHistoryDialog = false },
+                title = "Hapus Riwayat Unduhan?",
+                confirmButton = {
+                    GlassButton(
+                        text = "Hapus Riwayat",
+                        onClick = {
+                            viewModel.clearAllHistory()
+                            showClearHistoryDialog = false
+                        }
+                    )
+                },
+                dismissButton = {
+                    TextButton(onClick = { showClearHistoryDialog = false }) {
+                        Text("Batal", color = colors.textMuted)
                     }
-                )
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearHistoryDialog = false }) {
-                    Text("Batal", color = colors.textMuted)
                 }
+            ) {
+                Text(
+                    text = "Tindakan ini akan mengosongkan seluruh riwayat unduhan pada database lokal. File fisik video yang sudah terunduh tidak akan dihapus.",
+                    color = colors.textSecondary,
+                    fontSize = 13.sp
+                )
             }
-        ) {
-            Text(
-                text = "Tindakan ini akan mengosongkan seluruh riwayat unduhan pada database lokal. File fisik video yang sudah terunduh tidak akan dihapus.",
-                color = colors.textSecondary,
-                fontSize = 13.sp
-            )
         }
     }
 }

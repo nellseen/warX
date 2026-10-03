@@ -2,12 +2,14 @@ package com.example.ui.screens
 
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -94,148 +96,162 @@ fun DownloadsScreen(
         DownloadFilterTab.COMPLETED -> completedDownloads
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-    ) {
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Title
-        Text(
-            text = "Pengelola Unduhan",
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-            color = colors.textPrimary
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "Daftar proses unduhan video aktif dan riwayat file tersimpan",
-            style = MaterialTheme.typography.bodySmall,
-            color = colors.textSecondary
-        )
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // Segmented Tabs
-        TabRow(
-            selectedTabIndex = selectedTab.ordinal,
-            containerColor = colors.glassCard,
-            contentColor = colors.accentCyan,
-            indicator = { tabPositions ->
-                TabRowDefaults.SecondaryIndicator(
-                    Modifier.tabIndicatorOffset(tabPositions[selectedTab.ordinal]),
-                    color = colors.accentCyan,
-                    height = 3.dp
-                )
-            },
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .border(1.dp, colors.glassBorderSubtle, RoundedCornerShape(12.dp))
-        ) {
-            Tab(
-                selected = selectedTab == DownloadFilterTab.ALL,
-                onClick = { viewModel.selectTab(DownloadFilterTab.ALL) },
-                text = {
-                    Text(
-                        text = "Semua (${allDownloads.size})",
-                        fontSize = 12.sp,
-                        color = if (selectedTab == DownloadFilterTab.ALL) colors.accentCyan else colors.textMuted
-                    )
-                }
-            )
-            Tab(
-                selected = selectedTab == DownloadFilterTab.ACTIVE,
-                onClick = { viewModel.selectTab(DownloadFilterTab.ACTIVE) },
-                text = {
-                    Text(
-                        text = "Aktif (${activeDownloads.size})",
-                        fontSize = 12.sp,
-                        color = if (selectedTab == DownloadFilterTab.ACTIVE) colors.accentCyan else colors.textMuted
-                    )
-                }
-            )
-            Tab(
-                selected = selectedTab == DownloadFilterTab.COMPLETED,
-                onClick = { viewModel.selectTab(DownloadFilterTab.COMPLETED) },
-                text = {
-                    Text(
-                        text = "Selesai (${completedDownloads.size})",
-                        fontSize = 12.sp,
-                        color = if (selectedTab == DownloadFilterTab.COMPLETED) colors.accentCyan else colors.textMuted
-                    )
-                }
-            )
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val horizontalPad = when {
+            maxWidth > 840.dp -> 32.dp
+            maxWidth > 600.dp -> 24.dp
+            else -> 16.dp
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = horizontalPad)
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
 
-        if (displayedList.isEmpty()) {
-            // Empty state
-            Box(
+            // Title
+            Text(
+                text = "Pengelola Unduhan",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                color = colors.textPrimary
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Daftar proses unduhan video aktif dan riwayat file tersimpan",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary
+            )
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Segmented Tabs
+            TabRow(
+                selectedTabIndex = selectedTab.ordinal,
+                containerColor = colors.glassCard,
+                contentColor = colors.accentCyan,
+                indicator = { tabPositions ->
+                    TabRowDefaults.SecondaryIndicator(
+                        Modifier.tabIndicatorOffset(tabPositions[selectedTab.ordinal]),
+                        color = colors.accentCyan,
+                        height = 3.dp
+                    )
+                },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(1.dp, colors.glassBorderSubtle, RoundedCornerShape(12.dp))
             ) {
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(0.9f)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.HourglassEmpty,
-                            contentDescription = null,
-                            tint = colors.accentCyan.copy(alpha = 0.7f),
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
+                Tab(
+                    selected = selectedTab == DownloadFilterTab.ALL,
+                    onClick = { viewModel.selectTab(DownloadFilterTab.ALL) },
+                    text = {
                         Text(
-                            text = "Tidak Ada Unduhan",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = colors.textPrimary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = when (selectedTab) {
-                                DownloadFilterTab.ACTIVE -> "Saat ini tidak ada video yang sedang diunduh."
-                                DownloadFilterTab.COMPLETED -> "Belum ada video yang selesai diunduh."
-                                else -> "Belum ada riwayat unduhan. Mulai dari tab Beranda."
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.textSecondary,
-                            textAlign = TextAlign.Center
+                            text = "Semua (${allDownloads.size})",
+                            fontSize = 12.sp,
+                            color = if (selectedTab == DownloadFilterTab.ALL) colors.accentCyan else colors.textMuted
                         )
                     }
-                }
+                )
+                Tab(
+                    selected = selectedTab == DownloadFilterTab.ACTIVE,
+                    onClick = { viewModel.selectTab(DownloadFilterTab.ACTIVE) },
+                    text = {
+                        Text(
+                            text = "Aktif (${activeDownloads.size})",
+                            fontSize = 12.sp,
+                            color = if (selectedTab == DownloadFilterTab.ACTIVE) colors.accentCyan else colors.textMuted
+                        )
+                    }
+                )
+                Tab(
+                    selected = selectedTab == DownloadFilterTab.COMPLETED,
+                    onClick = { viewModel.selectTab(DownloadFilterTab.COMPLETED) },
+                    text = {
+                        Text(
+                            text = "Selesai (${completedDownloads.size})",
+                            fontSize = 12.sp,
+                            color = if (selectedTab == DownloadFilterTab.COMPLETED) colors.accentCyan else colors.textMuted
+                        )
+                    }
+                )
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(bottom = 100.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(displayedList, key = { it.id }) { item ->
-                    DownloadItemCard(
-                        item = item,
-                        onPlay = { viewModel.playLocalVideo(item.filePath, item.title) },
-                        onPause = { viewModel.pauseDownload(item.id) },
-                        onResume = { viewModel.resumeDownload(item.id) },
-                        onCancel = { viewModel.cancelDownload(item.id) },
-                        onRetry = { viewModel.retryDownload(item.id) },
-                        onDelete = { itemToDelete = item },
-                        onShare = { shareVideoFile(context, item.filePath, item.title) }
-                    )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (displayedList.isEmpty()) {
+                // Empty state
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    GlassCard(modifier = Modifier.fillMaxWidth(0.9f)) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.HourglassEmpty,
+                                contentDescription = null,
+                                tint = colors.accentCyan.copy(alpha = 0.7f),
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Tidak Ada Unduhan",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = colors.textPrimary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = when (selectedTab) {
+                                    DownloadFilterTab.ACTIVE -> "Saat ini tidak ada video yang sedang diunduh."
+                                    DownloadFilterTab.COMPLETED -> "Belum ada video yang selesai diunduh."
+                                    else -> "Belum ada riwayat unduhan. Mulai dari tab Beranda."
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textSecondary,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(bottom = 120.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(displayedList, key = { it.id }) { item ->
+                        DownloadItemCard(
+                            item = item,
+                            onPlay = {
+                                val f = File(item.filePath)
+                                if (!f.exists()) {
+                                    Toast.makeText(context, "Berkas video tidak ditemukan di penyimpanan!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    viewModel.playLocalVideo(item.filePath, item.title)
+                                }
+                            },
+                            onPause = { viewModel.pauseDownload(item.id) },
+                            onResume = { viewModel.resumeDownload(item.id) },
+                            onCancel = { viewModel.cancelDownload(item.id) },
+                            onRetry = { viewModel.retryDownload(item.id) },
+                            onDelete = { itemToDelete = item },
+                            onShare = { shareVideoFile(context, item.filePath, item.title) }
+                        )
+                    }
                 }
             }
         }
     }
 
-    // Video Player Modal
-    if (playerTarget != null) {
-        val (pathOrUri, title) = playerTarget!!
+    // Video Player Modal (100% Null-safe snapshot without !!)
+    val currentTarget = playerTarget
+    if (currentTarget != null) {
+        val (pathOrUri, title) = currentTarget
         VideoPlayerModal(
             videoUrl = pathOrUri,
             title = title,
@@ -243,9 +259,9 @@ fun DownloadsScreen(
         )
     }
 
-    // Delete Confirmation Dialog
-    if (itemToDelete != null) {
-        val target = itemToDelete!!
+    // Delete Confirmation Dialog (100% Null-safe snapshot without !!)
+    val currentDelete = itemToDelete
+    if (currentDelete != null) {
         GlassDialog(
             onDismissRequest = { itemToDelete = null },
             title = "Hapus Unduhan?",
@@ -253,7 +269,7 @@ fun DownloadsScreen(
                 GlassButton(
                     text = "Hapus File",
                     onClick = {
-                        viewModel.deleteDownload(target, deleteFile = true)
+                        viewModel.deleteDownload(currentDelete, deleteFile = true)
                         itemToDelete = null
                     }
                 )
@@ -265,7 +281,7 @@ fun DownloadsScreen(
             }
         ) {
             Text(
-                text = "Apakah Anda yakin ingin menghapus '${target.title}' beserta file fisiknya?",
+                text = "Apakah Anda yakin ingin menghapus '${currentDelete.title}' beserta file fisiknya?",
                 color = colors.textSecondary,
                 fontSize = 13.sp
             )
@@ -525,7 +541,10 @@ fun DownloadItemCard(
 fun shareVideoFile(context: Context, filePath: String, title: String) {
     try {
         val file = File(filePath)
-        if (!file.exists()) return
+        if (!file.exists()) {
+            Toast.makeText(context, "Berkas video tidak ditemukan pada perangkat", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         val uri = FileProvider.getUriForFile(
             context,
@@ -539,5 +558,7 @@ fun shareVideoFile(context: Context, filePath: String, title: String) {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(Intent.createChooser(shareIntent, "Bagikan Video"))
-    } catch (_: Exception) {}
+    } catch (e: Exception) {
+        Toast.makeText(context, "Gagal membagikan: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+    }
 }

@@ -60,8 +60,12 @@ class ExtractionEngine(
                 return@withContext Result.failure(IllegalArgumentException("URL tidak valid. Harap gunakan URL yang diawali http:// atau https://"))
             }
 
-            val targetUri = URI(cleanUrl)
-            val domain = targetUri.host ?: cleanUrl
+            val domain = try {
+                val targetUri = URI(cleanUrl)
+                targetUri.host ?: cleanUrl
+            } catch (_: Exception) {
+                cleanUrl.substringAfter("://").substringBefore("/")
+            }
 
             // 1. Check if the URL itself is already a direct media stream or HLS
             if (isDirectMediaUrl(cleanUrl)) {

@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.data.AppThemeMode
 import com.example.downloader.DownloadManager
 import com.example.hls.HlsParser
 import org.junit.Assert.assertEquals
@@ -60,9 +61,47 @@ class ExampleUnitTest {
     }
 
     @Test
+    fun testHlsEmptyPlaylistParsing() {
+        val emptyContent = "#EXTM3U\n"
+        val result = HlsParser.parse(emptyContent, "https://example.com/empty.m3u8")
+        assertFalse(result.isMaster)
+        assertTrue(result.segments.isEmpty())
+        assertTrue(result.variants.isEmpty())
+    }
+
+    @Test
+    fun testHlsVariantFallbackQualityNaming() {
+        val content = """
+            #EXTM3U
+            #EXT-X-STREAM-INF:BANDWIDTH=800000
+            stream_low.m3u8
+        """.trimIndent()
+
+        val result = HlsParser.parse(content, "https://example.com/test.m3u8")
+        assertTrue(result.isMaster)
+        assertEquals(1, result.variants.size)
+        assertEquals("800k", result.variants[0].quality)
+    }
+
+    @Test
     fun testSanitizeFileName() {
         val raw = "My Video: With / Invalid * Characters? <Title>"
         val clean = DownloadManager.sanitizeFileName(raw, ".mp4")
         assertEquals("My Video_ With _ Invalid _ Characters_ _Title_.mp4", clean)
+    }
+
+    @Test
+    fun testSanitizeFileNameWithExtensionIncluded() {
+        val raw = "Already_Ending_With.mp4"
+        val clean = DownloadManager.sanitizeFileName(raw, ".mp4")
+        assertEquals("Already_Ending_With.mp4", clean)
+    }
+
+    @Test
+    fun testThemeEnumValues() {
+        assertEquals(3, AppThemeMode.entries.size)
+        assertEquals(AppThemeMode.SYSTEM, AppThemeMode.valueOf("SYSTEM"))
+        assertEquals(AppThemeMode.LIGHT, AppThemeMode.valueOf("LIGHT"))
+        assertEquals(AppThemeMode.DARK, AppThemeMode.valueOf("DARK"))
     }
 }

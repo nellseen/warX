@@ -23,7 +23,6 @@ import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.io.RandomAccessFile
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.crypto.Cipher
@@ -62,15 +61,22 @@ class DownloadManager private constructor(private val context: Context) {
         }
     }
 
+    /**
+     * Starts download with protection against duplicate jobs.
+     */
     fun startDownload(downloadId: Long) {
-        // Cancel existing job if running
-        activeJobs[downloadId]?.cancel()
+        val existingJob = activeJobs[downloadId]
+        if (existingJob != null && existingJob.isActive) {
+            // Already downloading, avoid duplicate execution
+            return
+        }
 
         val job = scope.launch {
             val item = repository.getDownload(downloadId) ?: return@launch
             repository.updateDownload(item.copy(state = DownloadState.DOWNLOADING, errorMessage = null))
 
-            DownloadForegroundService.startService(context, downloadId)
+            // Start foreground service safely
+            DownloadForegroundService.startService(context)
 
             try {
                 if (item.isHls) {
@@ -79,14 +85,15 @@ class DownloadManager private constructor(private val context: Context) {
                     executeDirectDownload(item)
                 }
             } catch (e: CancellationException) {
-                // Cancelled or paused
+                // Cancelled or paused normally
             } catch (e: Exception) {
                 val current = repository.getDownload(downloadId)
                 if (current != null && current.state == DownloadState.DOWNLOADING) {
                     repository.updateDownload(
                         current.copy(
                             state = DownloadState.FAILED,
-                            errorMessage = e.localizedMessage ?: "Terjadi kesalahan saat mengunduh"
+                            speedBytesPerSec = 0L,
+                            errorMessage = e.localizedMessage ?: "Terjadi kesalahan koneksi atau berkas rusak"
                         )
                     )
                 }
@@ -102,10 +109,14 @@ class DownloadManager private constructor(private val context: Context) {
         job?.cancel()
         scope.launch {
             val item = repository.getDownload(downloadId)
-            if (item != null) {
+            if (item != null && item.state == DownloadState.DOWNLOADING) {
                 repository.updateDownload(item.copy(state = DownloadState.PAUSED, speedBytesPerSec = 0L))
             }
         }
+    }
+
+    fun resumeDownload(downloadId: Long) {
+        startDownload(downloadId)
     }
 
     fun cancelDownload(downloadId: Long) {
@@ -114,7 +125,6 @@ class DownloadManager private constructor(private val context: Context) {
         scope.launch {
             val item = repository.getDownload(downloadId)
             if (item != null) {
-                // Remove partial files
                 try {
                     val partFile = File("${item.filePath}.part")
                     if (partFile.exists()) partFile.delete()
@@ -184,7 +194,10 @@ class DownloadManager private constructor(private val context: Context) {
             throw IllegalStateException("Server merespons kode HTTP ${response.code}")
         }
 
-        val body = response.body ?: throw IllegalStateException("Respons body kosong")
+        val body = response.body ?: run {
+            response.close()
+            throw IllegalStateException("Respons body kosong dari server")
+        }
         val stream: InputStream = body.byteStream()
 
         val isAppend = existingBytes > 0 && response.code == 206
@@ -219,7 +232,7 @@ class DownloadManager private constructor(private val context: Context) {
                 val deltaT = now - lastUpdateTime
                 if (deltaT >= 800) {
                     val deltaB = downloaded - lastBytes
-                    currentSpeed = ((deltaB * 1000L) / deltaT).coerceAtLeast(0L)
+                    currentSpeed = if (deltaT > 0) ((deltaB * 1000L) / deltaT).coerceAtLeast(0L) else 0L
                     val eta = if (currentSpeed > 0 && totalBytes > downloaded) {
                         (totalBytes - downloaded) / currentSpeed
                     } else 0L
@@ -263,10 +276,12 @@ class DownloadManager private constructor(private val context: Context) {
                 )
             )
         } catch (e: Exception) {
-            output.flush()
-            output.close()
-            stream.close()
-            response.close()
+            try {
+                output.flush()
+                output.close()
+                stream.close()
+                response.close()
+            } catch (_: Exception) {}
             throw e
         }
     }
@@ -294,7 +309,7 @@ class DownloadManager private constructor(private val context: Context) {
 
         val parsed = HlsParser.parse(content, finalUrl)
         val segments = if (parsed.isMaster) {
-            // Select highest variant or matching quality
+            // Select matching variant or first variant
             val selectedVariant = parsed.variants.firstOrNull { it.quality == download.quality }
                 ?: parsed.variants.firstOrNull()
                 ?: throw IllegalStateException("Tidak ada variant stream yang ditemukan pada master playlist")
@@ -368,7 +383,6 @@ class DownloadManager private constructor(private val context: Context) {
 
             var segRes = client.newCall(segReq).execute()
             if (!segRes.isSuccessful) {
-                // Retry once
                 delay(500)
                 segRes.close()
                 segRes = client.newCall(segReq).execute()
@@ -399,7 +413,6 @@ class DownloadManager private constructor(private val context: Context) {
 
                 if (keyBytes != null) {
                     val iv = segment.keyIv ?: run {
-                        // Generate IV from sequence number
                         val generatedIv = ByteArray(16)
                         var seq = i.toLong()
                         for (idx in 15 downTo 8) {
@@ -473,11 +486,14 @@ class DownloadManager private constructor(private val context: Context) {
 
     private fun scanMediaFile(filePath: String) {
         try {
-            MediaScannerConnection.scanFile(
-                context,
-                arrayOf(filePath),
-                arrayOf("video/*", "video/mp4", "video/mp2t")
-            ) { _, _ -> }
+            val f = File(filePath)
+            if (f.exists()) {
+                MediaScannerConnection.scanFile(
+                    context,
+                    arrayOf(f.absolutePath),
+                    arrayOf("video/*", "video/mp4", "video/mp2t")
+                ) { _, _ -> }
+            }
         } catch (_: Exception) {}
     }
 }
